@@ -11,21 +11,55 @@
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from itertools import product
+
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score, mean_squared_error
+from ucimlrepo import fetch_ucirepo
 
 
 class NeuralNet:
     def __init__(self, dataFile, header=True):
-        self.raw_input = pd.read_csv(dataFile)
+        # Fetch Iris dataset from UCI
+        iris = fetch_ucirepo(id=53)
 
+        # Features and targets
+        X = iris.data.features
+        y = iris.data.targets
 
-
+        # Combine into one dataframe like your original code expects
+        self.raw_input = pd.concat([X, y], axis=1)
+        #self.raw_input = pd.read_csv(dataFile)
 
     # TODO: Write code for pre-processing the dataset, which would include
     # standardization, normalization,
     #   categorical to numerical, etc
+
+    # iris dataset has no null values
     def preprocess(self):
-        self.processed_data = self.raw_input
+        #self.processed_data = self.raw_input
+
+        df = self.raw_input.copy()
+
+        # Encode species labels
+        le = LabelEncoder()
+        df.iloc[:, -1] = le.fit_transform(df.iloc[:, -1])
+
+        # Split features and target
+        X = df.iloc[:, :-1]
+        y = df.iloc[:, -1]
+
+        # Standardize features
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+
+        # Store processed data
+        self.processed_data = pd.DataFrame(X_scaled)
+        self.processed_data[df.columns[-1]] = y.values
+
 
         return 0
 
