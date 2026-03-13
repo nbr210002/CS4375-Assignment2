@@ -8,7 +8,6 @@
 #
 #####################################################################################################################
 
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -19,7 +18,6 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, mean_squared_error
 from ucimlrepo import fetch_ucirepo
-
 
 class NeuralNet:
     def __init__(self, dataFile, header=True):
@@ -32,21 +30,24 @@ class NeuralNet:
 
         # Combine into one dataframe like your original code expects
         self.raw_input = pd.concat([X, y], axis=1)
-        #self.raw_input = pd.read_csv(dataFile)
 
     # TODO: Write code for pre-processing the dataset, which would include
     # standardization, normalization,
-    #   categorical to numerical, etc
-
-    # iris dataset has no null values
+    # categorical to numerical, etc
     def preprocess(self):
         #self.processed_data = self.raw_input
-
         df = self.raw_input.copy()
 
+        # Handle null values (drop rows with nulls)
+        df.dropna(inplace=True)
+
         # Encode species labels
-        le = LabelEncoder()
-        df.iloc[:, -1] = le.fit_transform(df.iloc[:, -1])
+        label_map = {
+            'Iris-setosa': 0,
+            'Iris-versicolor': 1,
+            'Iris-virginica': 2
+        }
+        df['class'] = df['class'].map(label_map).astype(int)
 
         # Split features and target
         X = df.iloc[:, :-1]
@@ -60,6 +61,8 @@ class NeuralNet:
         self.processed_data = pd.DataFrame(X_scaled)
         self.processed_data[df.columns[-1]] = y.values
 
+        print(len(self.processed_data))
+        print(self.processed_data.head)
 
         return 0
 
@@ -103,4 +106,4 @@ class NeuralNet:
 if __name__ == "__main__":
     neural_network = NeuralNet("train.csv") # put in path to your file
     neural_network.preprocess()
-    neural_network.train_evaluate()
+   # neural_network.train_evaluate()
