@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 from itertools import product
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.metrics import accuracy_score, log_loss
 from ucimlrepo import fetch_ucirepo
 
 class NeuralNet:
@@ -61,8 +61,8 @@ class NeuralNet:
         self.processed_data = pd.DataFrame(X_scaled)
         self.processed_data[df.columns[-1]] = y.values
 
-        print(len(self.processed_data))
-        print(self.processed_data.head)
+        #print(len(self.processed_data))
+        #print(self.processed_data.head)
 
         return 0
 
@@ -79,22 +79,75 @@ class NeuralNet:
         nrows = len(self.processed_data.index)
         X = self.processed_data.iloc[:, 0:(ncols - 1)]
         y = self.processed_data.iloc[:, (ncols-1)]
+
+        # split into train and test data
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y)
+            X, y, test_size=0.25, random_state=42
+        )
 
         # Below are the hyperparameters that you need to use for model evaluation
         # You can assume any fixed number of neurons for each hidden layer. 
-        
         activations = ['logistic', 'tanh', 'relu']
         learning_rate = [0.01, 0.1]
         max_iterations = [100, 200] # also known as epochs
         num_hidden_layers = [2, 3]
 
-        # Create the neural network and be sure to keep track of the performance
-        #   metrics
+        # Fixed neurons per hidden layer
+        neurons_per_layer = 10
+
+        results = []  # will hold one dict per model
+
+        # We'll collect per-epoch loss curves for each model
+        history = {}   # key -> list of loss values
+
+        combos = list(product(activations, learning_rate, max_iterations, num_hidden_layers))
+        total  = len(combos)
+        print(f"Training {total} models: 8 with logistic, 8 with tanh, and 8 with relu...\n")
+
+        for idx, (activation_func, learn_rate, epochs, n_hidden_layers) in enumerate(combos, 1):
+            hidden_layer_sizes = tuple([neurons_per_layer] * n_hidden_layers)
+
+            # create a label for easy reading
+            label = f"act={activation_func}, lr={learn_rate}, ep={epochs}, layers={n_hidden_layers}"
+            print(f"[{idx}/{total}] {label}")
+
+            # Create the neural network and be sure to keep track of the performance metrics
+            model = MLPClassifier(
+                hidden_layer_sizes=hidden_layer_sizes,
+                activation=activation_func,
+                learning_rate_init=learn_rate,
+                max_iter=epochs,
+                random_state=42,
+                n_iter_no_change=epochs   # prevent early stopping
+            )
+
+            # store the epoch loss to create the loss curve later on
+            history[label] = model.loss_curve_
+ 
+            # get the overall prediction/output for both train and test for this model
+            y_train_pred = model.predict(X_train)
+            y_test_pred  = model.predict(X_test)
+ 
+            # get the accuracy scores and errors (log loss)
+            train_acc = accuracy_score(y_train, y_train_pred)
+            test_acc  = accuracy_score(y_test,  y_test_pred)
+            train_loss = log_loss(y_train, model.predict_proba(X_train))
+            test_loss  = log_loss(y_test,  model.predict_proba(X_test))
+ 
+            # append to results
+            results.append({
+                "Activation": activation_func,
+                "Learning Rate": learn_rate,
+                "Max Epochs": epochs,
+                "Hidden Layers": n_hidden_layers,
+                "Train Accuracy": round(train_acc, 4),
+                "Test Accuracy": round(test_acc,  4),
+                "Train Log Loss": round(train_loss, 4),
+                "Test Log Loss": round(test_loss,  4),
+            })
 
         # Plot the model history for each model in a single plot
-        # model history is a plot of accuracy vs number of epochs
+        # model history is a plot of accuracy (MSE) vs number of epochs
         # you may want to create a large sized plot to show multiple lines
         # in a same figure.
 
@@ -106,4 +159,4 @@ class NeuralNet:
 if __name__ == "__main__":
     neural_network = NeuralNet("train.csv") # put in path to your file
     neural_network.preprocess()
-   # neural_network.train_evaluate()
+    neural_network.train_evaluate()
