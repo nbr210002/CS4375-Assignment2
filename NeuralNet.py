@@ -97,14 +97,11 @@ class NeuralNet:
 
         results = []  # will hold one dict per model
 
-        # We'll collect per-epoch loss curves for each model
-        history = {}   # key -> list of loss values
-
         combos = list(product(activations, learning_rate, max_iterations, num_hidden_layers))
         total  = len(combos)
         print(f"Training {total} models: 8 with logistic, 8 with tanh, and 8 with relu...\n")
 
-        # Moved
+        # We'll collect per-epoch loss curves for each model
         activation_history = {act: {} for act in activations}
         
         for idx, (activation_func, learn_rate, epochs, n_hidden_layers) in enumerate(combos, 1):
@@ -161,24 +158,21 @@ class NeuralNet:
         # Save table
         results_df.to_csv("model_results.csv", index=False)
 
+        # model history is a plot of accuracy (MSE) vs number of epochs
+        # you may want to create a large sized plot to show multiple lines
+        # in a same figure.
         # Plot the model history for each model in a single plot
         for activation, models in activation_history.items():
             plt.figure(figsize=(10,6))
             for label, loss_values in models.items():
-                plt.plot(loss_values, marker='o', label=label)
+                plt.plot(loss_values, linewidth=1.5, alpha=0.8, label=label)
             plt.xlabel("Epochs")
             plt.ylabel("Loss")
             plt.title(f"Training Loss vs Epochs ({activation})")
             plt.grid(True)
             plt.legend(fontsize=8, loc='upper right')
-            filename = f"{activation}_models_loss.png"
-            plt.savefig(filename)
-            plt.close()
+            plt.show()
 
-        # model history is a plot of accuracy (MSE) vs number of epochs
-        # you may want to create a large sized plot to show multiple lines
-        # in a same figure.
-       
         return 0
 
 if __name__ == "__main__":
