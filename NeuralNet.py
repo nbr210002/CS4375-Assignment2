@@ -159,27 +159,29 @@ class NeuralNet:
         results_df.to_csv("model_results.csv", index=False)
 
         # Plot the model history for each model in a single plot
-        plt.figure(figsize=(14,8))
-
         for label, loss_values in history.items():
-            plt.plot(loss_values, label=label)
+            plt.figure(figsize=(8,6))
+            plt.plot(loss_values, marker='o')
+            plt.xlabel("Epochs")
+            plt.ylabel("Loss")
+            plt.title(f"Training Loss vs Epochs\n{label}")
+            plt.grid(True)
+            
+            # Create file label
+            file_label = label.replace("=", "").replace(",", "").replace(" ", "_")
+            filename = f"{file_label}.png"
+            
+            plt.savefig(filename)
+            plt.close()
     
         # model history is a plot of accuracy (MSE) vs number of epochs
         # you may want to create a large sized plot to show multiple lines
         # in a same figure.
-
-        plt.xlabel("Epochs")
-        plt.ylabel("Loss")
-        plt.title("Model Training History (Loss vs Epochs)")
-        plt.legend(bbox_to_anchor=(1.05,1), loc='upper left', fontsize=8)
-        plt.tight_layout()
-
-        plt.savefig("model_history.png")
-        plt.show()
-
+       
         return 0
 
 if __name__ == "__main__":
     neural_network = NeuralNet("train.csv") # put in path to your file
     neural_network.preprocess()
     neural_network.train_evaluate()
+
