@@ -104,6 +104,9 @@ class NeuralNet:
         total  = len(combos)
         print(f"Training {total} models: 8 with logistic, 8 with tanh, and 8 with relu...\n")
 
+        # Moved
+        activation_history = {act: {} for act in activations}
+        
         for idx, (activation_func, learn_rate, epochs, n_hidden_layers) in enumerate(combos, 1):
             hidden_layer_sizes = tuple([neurons_per_layer] * n_hidden_layers)
 
@@ -125,7 +128,7 @@ class NeuralNet:
             model.fit(X_train, y_train)
 
             # store the epoch loss to create the loss curve later on
-            history[label] = model.loss_curve_
+            activation_history[activation_func][label] = model.loss_curve_
  
             # get the overall prediction/output for both train and test for this model
             y_train_pred = model.predict(X_train)
@@ -159,21 +162,19 @@ class NeuralNet:
         results_df.to_csv("model_results.csv", index=False)
 
         # Plot the model history for each model in a single plot
-        for label, loss_values in history.items():
-            plt.figure(figsize=(8,6))
-            plt.plot(loss_values, marker='o')
+        for activation, models in activation_history.items():
+            plt.figure(figsize=(10,6))
+            for label, loss_values in models.items():
+                plt.plot(loss_values, marker='o', label=label)
             plt.xlabel("Epochs")
             plt.ylabel("Loss")
-            plt.title(f"Training Loss vs Epochs\n{label}")
+            plt.title(f"Training Loss vs Epochs ({activation})")
             plt.grid(True)
-            
-            # Create file label
-            file_label = label.replace("=", "").replace(",", "").replace(" ", "_")
-            filename = f"{file_label}.png"
-            
+            plt.legend(fontsize=8, loc='upper right')
+            filename = f"{activation}_models_loss.png"
             plt.savefig(filename)
             plt.close()
-    
+
         # model history is a plot of accuracy (MSE) vs number of epochs
         # you may want to create a large sized plot to show multiple lines
         # in a same figure.
