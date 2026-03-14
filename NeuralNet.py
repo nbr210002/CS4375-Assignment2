@@ -173,6 +173,7 @@ class NeuralNet:
             plt.legend(fontsize=8, loc='upper right')
             filename = f"{activation}_models_loss.png"
             plt.savefig(filename)
+            plt.show()
             plt.close()
 
         # model history is a plot of accuracy (MSE) vs number of epochs
